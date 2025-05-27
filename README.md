@@ -7,11 +7,11 @@
 - [Tecnologías](#tecnologías)
 - [Modelos de Datos](#modelos-de-datos)
 - [Funcionalidades](#funcionalidades)
-- [Instalación](#instalación)
 - [Estructura](#estructura)
 - [Ejemplos de Código](#ejemplos-de-código)
 - [Seguridad](#seguridad)
 - [Mejoras Futuras](#mejoras-futuras)
+- [Instalación](#instalación)
 
 ## Introducción
 
@@ -68,6 +68,8 @@ Sistema de gestión de cine desarrollado con Laravel que permite a los usuarios 
 2. Seguridad:
    - Autenticación segura
    - Protección XSS y CSRF
+   - Cifrado de contraseñas mediante bcrypt
+   - Protección de rutas sensibles mediante middleware
    - Encriptación de datos sensibles
 
 3. Usabilidad:
@@ -493,45 +495,6 @@ proyecto_final/
     └── js/
 ```
 
-## Instalación
-
-1. Clonar el repositorio
-```bash
-git clone [url-repositorio]
-```
-
-2. Instalar dependencias
-```bash
-composer install
-npm install
-```
-
-3. Configurar el archivo .env
-```bash
-cp .env.example .env
-php artisan key:generate
-```
-
-4. Configurar la base de datos en .env
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=nombre_db
-DB_USERNAME=usuario
-DB_PASSWORD=contraseña
-```
-
-5. Ejecutar migraciones y seeders
-```bash
-php artisan migrate --seed
-```
-
-6. Iniciar el servidor
-```bash
-php artisan serve
-```
-
 ## Optimización y Diseño
 
 ### Layout y CSS
@@ -662,8 +625,8 @@ class EmojiSelector {
 
 ## Seguridad
 
-### Autenticación Segura
-Implementamos múltiples capas de seguridad en la autenticación:
+### Autenticación y Autorización
+El sistema de autenticación se ha implementado utilizando las características nativas de Laravel, con cifrado de contraseñas mediante bcrypt y control de acceso basado en roles:
 
 ```php
 // config/auth.php
@@ -711,7 +674,7 @@ class AuthenticateSecure extends Authenticate
 ```
 
 ### Protección XSS y CSRF
-Implementamos múltiples medidas contra ataques XSS y CSRF:
+Se implementan medidas de seguridad estándar de Laravel para protección contra ataques XSS y CSRF:
 
 ```php
 // app/Http/Middleware/XSSProtection.php
@@ -743,8 +706,8 @@ class XSSProtection
 </head>
 ```
 
-### Encriptación de Datos Sensibles
-Utilizamos el sistema de encriptación de Laravel para datos sensibles:
+### Gestión de Datos Sensibles
+Los datos sensibles se manejan de forma segura utilizando las características de encriptación de Laravel:
 
 ```php
 // app/Models/User.php
@@ -759,37 +722,6 @@ class User extends Authenticatable
             get: fn ($value) => $value ? Crypt::decryptString($value) : null,
             set: fn ($value) => $value ? Crypt::encryptString($value) : null
         );
-    }
-}
-
-// app/Services/PaymentService.php
-class PaymentService
-{
-    private function procesarPago(User $user, $monto)
-    {
-        try {
-            // Los datos sensibles se encriptan antes de almacenarse
-            $datosTarjeta = [
-                'numero' => Crypt::encryptString($user->credit_card),
-                'cvv' => Crypt::encryptString($user->cvv),
-                'expiracion' => Crypt::encryptString($user->card_expiry)
-            ];
-            
-            // Log seguro sin datos sensibles
-            Log::info('Procesando pago', [
-                'user_id' => $user->id,
-                'monto' => $monto,
-                'fecha' => now()
-            ]);
-            
-            
-        } catch (\Exception $e) {
-            Log::error('Error en pago', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
     }
 }
 ```
@@ -819,8 +751,55 @@ public function boot()
 
 ## Mejoras Futuras
 
-1. Implementación de pagos online
-2. Sistema de recomendaciones
-3. App móvil nativa
-4. Sistema de valoraciones y comentarios
-5. Integración con APIs de información de películas
+1. Sistema de Filtrado por Cines:
+   - Implementar filtros específicos para cada cine
+
+2. Optimización de Estructura de Código:
+   - Mejorar la organización de archivos CSS eliminando estilos inline
+   - Refactorizar componentes para mejor separación de responsabilidades
+   - Implementar un sistema más robusto de layouts
+
+3. Panel de Administración Mejorado:
+   - Añadir gestión completa de usuarios desde el panel de administración
+   - Implementar sistema para promover usuarios a administradores
+   - Añadir capacidad de revocar permisos de usuario
+   - Incluir métricas y estadísticas de uso
+
+## Instalación
+
+1. Clonar el repositorio
+```bash
+git clone [url-repositorio]
+```
+
+2. Instalar dependencias
+```bash
+composer install
+npm install
+```
+
+3. Configurar el archivo .env
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+4. Configurar la base de datos en .env
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nombre_db
+DB_USERNAME=usuario
+DB_PASSWORD=contraseña
+```
+
+5. Ejecutar migraciones y seeders
+```bash
+php artisan migrate --seed
+```
+
+6. Iniciar el servidor
+```bash
+php artisan serve
+```

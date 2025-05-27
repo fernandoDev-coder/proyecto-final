@@ -1,0 +1,498 @@
+﻿TAKE YOUR SEAT
+
+
+Justificación y relevancia del proyecto
+La idea de crear Take Your Seat surgió al notar que muchas páginas de reservas de cine son poco intuitivas, están limitadas a un solo cine o cadena, y no ofrecen una experiencia verdaderamente unificada. En muchos casos, los usuarios deben ingresar a distintas plataformas dependiendo del cine que desean visitar, lo que no solo es incómodo, sino que también fragmenta la experiencia del usuario.
+Take Your Seat nace con la intención de ofrecer una solución moderna, centralizada e interactiva, que permite gestionar múltiples cines desde una misma plataforma. Su arquitectura está pensada para escalar sin restricciones, permitiendo la incorporación de nuevos cines sin necesidad de rehacer el sistema o afectar a los ya existentes. Esto no solo beneficia a los usuarios, que pueden acceder fácilmente a una amplia variedad de funciones y películas, sino también a los administradores de cines, quienes encuentran en la plataforma una herramienta flexible y potente para gestionar sus funciones, salas y reservas.
+Al apostar por una experiencia de usuario más fluida y una estructura preparada para el crecimiento, Take Your Seat busca convertirse en una referencia en la gestión digital de reservas de cine.
+Objetivos generales
+1. Desarrollar una plataforma web interactiva que permita a los usuarios reservar entradas de cine de forma rápida, cómoda y segura.
+
+2. Centralizar la gestión de distintos cines en un único sistema, sin limitaciones en cuanto a la expansión del número de salas o funciones.
+
+3. Optimizar la experiencia del usuario mediante una interfaz clara que facilite la navegación, la búsqueda de películas y la selección de asientos.
+Objetivos específicos
+   1. Implementar un sistema de autenticación y gestión de roles (usuarios y administradores) con protección de rutas mediante middleware.
+
+   2. Diseñar una base de datos relacional eficiente para manejar usuarios, películas, horarios y reservas sin conflictos ni redundancia.
+
+   3. Crear una interfaz dinámica y responsive utilizando Bootstrap 5 y JavaScript para la selección de asientos y validaciones en tiempo real.
+
+   4. Garantizar la correcta gestión de funciones sin solapamiento de horarios.
+
+   5. Desarrollar funcionalidades administrativas para la creación, edición y eliminación de películas y horarios.
+
+   6. Incluir la generación de informes sobre ingresos, ocupación de salas y número de reservas, con métricas claras para facilitar la toma de decisiones.
+Análisis y Planificación
+Requisitos funcionales
+      1. Gestión de usuarios y autenticación
+
+         * Registro e inicio de sesión de usuarios.
+
+         * Asignación de roles: usuario regular y administrador.
+
+         * Protección de rutas según el rol mediante middleware.
+
+            2. Consulta de películas y funciones
+
+               * Visualización de cartelera actual con información detallada de cada película.
+
+               * Consulta de horarios disponibles por película.
+
+                  3. Sistema de reservas
+
+                     * Selección interactiva de asientos disponibles.
+
+                     * Cálculo automático del precio total según cantidad de entradas.
+
+                     * Confirmación de reserva y cancelación de reservas anteriores.
+
+                     * Evitar sobre-reservas mediante bloqueo en tiempo real.
+
+                        4. Gestión administrativa
+
+                           * Crear, editar y modificar películas.
+
+                           * Gestión de horarios sin permitir solapamientos.
+
+                           * Visualización de informes sobre ingresos, reservas y ocupación por sala.
+
+
+
+
+
+
+
+Requisitos no funcionales
+                              1. Usabilidad
+
+                                 * Interfaz clara, moderna e intuitiva.
+
+                                 * Navegación fluida y comprensible para todos los perfiles de usuario.
+
+                                    2. Rendimiento
+
+                                       * Tiempos de carga optimizados.
+
+                                       * Procesamiento ágil de consultas, reservas y reportes.
+
+                                          3. Seguridad
+
+                                             * Control de acceso según el rol del usuario.
+
+                                             * Encriptación de contraseñas y protección de datos personales.
+
+                                             * Validaciones del lado cliente y servidor.
+
+                                                4. Escalabilidad
+
+                                                   * Posibilidad de incorporar nuevos cines, funciones y usuarios sin límites estructurales.
+
+                                                   * Arquitectura pensada para el crecimiento a  futuro.
+
+                                                      5. Mantenibilidad
+
+                                                         * Código estructurado y modular.
+
+                                                         * Uso de frameworks estables y tecnologías ampliamente documentadas (Laravel, Bootstrap, MySQL)
+Diagramas de Casos de Uso
+1. Actores
+                                                            * Visitante (Usuario no registrado): Persona que accede a la web sin autenticarse. Puede visualizar películas y horarios disponibles, pero no puede reservar.
+
+                                                            * Usuario Registrado: Persona autenticada. Puede reservar entradas, ver sus reservas y cancelarlas.
+
+                                                            * Administrador: Usuario con permisos avanzados. Puede gestionar el contenido del sistema y acceder a estadísticas e informes.
+
+________________
+
+
+2. Casos de Uso
+                                                               * Visitante:
+
+                                                                  * Ver cartelera de películas.
+
+                                                                  * Ver horarios disponibles.
+
+                                                                  * Registrarse.
+
+                                                                  * Iniciar sesión.
+
+                                                                     * Usuario Registrado:
+
+                                                                        * Todas las funciones del visitante.
+
+                                                                        * Reservar entradas seleccionando butacas disponibles.
+
+                                                                        * Ver historial de reservas.
+
+                                                                        * Cancelar reservas.
+
+                                                                        * Ver precio total de la reserva.
+
+                                                                           * Administrador:
+
+                                                                              * Todas las funciones del visitante.
+
+                                                                              * Crear, editar y eliminar películas.
+
+                                                                              * Asignar horarios sin solapamiento.
+
+                                                                              * Ver informes de ingresos, ocupación de salas y cantidad de reservas.
+
+________________
+
+
+3. Interacciones
+                                                                                 * Visitante:
+ Puede navegar la cartelera y los horarios, pero necesita registrarse e iniciar sesión para realizar reservas.
+
+                                                                                 * Usuario Registrado:
+ Tiene acceso a todo lo anterior, y además puede interactuar con el sistema de reservas: elegir asientos, confirmar reservas, verlas en su perfil y cancelarlas.
+
+                                                                                 * Administrador:
+ Además de todas las funciones del visitante, puede modificar el contenido del sistema (películas y horarios), gestionar roles de usuarios y consultar informes sobre la actividad del sistema.
+Público Objetivo
+Amantes del cine y usuarios que buscan comodidad al reservar entradas.
+ Take Your Seat está dirigido a personas que desean una experiencia rápida, clara y sin complicaciones al momento de reservar entradas para funciones de cine. También está orientado a administradores de salas de cine que buscan una herramienta eficiente para la gestión de películas, horarios y reservas.
+________________
+
+
+Estudio de Mercado y Competencia
+Aplicaciones y Sitios Web Existentes
+                                                                                    * Cinesa / Yelmo / Kinépolis: Sitios oficiales de cadenas de cine que permiten reservar entradas online, aunque cada una opera por separado y solo gestiona sus propias salas.
+________________
+
+
+Análisis de la Competencia
+                                                                                    * Ventajas de Take Your Seat:
+
+                                                                                       * Unifica varios cines en una misma plataforma, sin estar limitada a una cadena específica.
+
+                                                                                       * Permite agregar fácilmente más salas de cine, lo que la hace escalable y adaptable a futuros crecimientos.
+
+                                                                                       * Interfaz amigable con el usuario para seleccionar butacas y reservar en pocos pasos.
+
+                                                                                       * Panel de administrador con control total sobre funciones, películas y estadísticas.
+
+
+
+                                                                                          * Desventajas:
+
+                                                                                             * La competencia puede tener mayor visibilidad inicial y recursos para marketing o alianzas con grandes cadenas.
+
+                                                                                             * Algunos usuarios pueden estar acostumbrados a las plataformas tradicionales de sus cines favoritos.
+Planificación del Proyecto
+Investigación y planificación
+Durante esta etapa se investigaron los principales problemas que enfrentan los usuarios al momento de reservar entradas en plataformas fragmentadas o limitadas a una sola cadena de cines. El objetivo fue identificar cómo unificar la experiencia del usuario y ofrecer una solución centralizada que permita escalar fácilmente a medida que se incorporen más cines al sistema.
+Se analizaron los siguientes aspectos clave:
+                                                                                                * Estudio de viabilidad técnica y funcional del proyecto.
+
+                                                                                                * Identificación de las funcionalidades imprescindibles para usuarios y administradores.
+
+                                                                                                * Establecimiento de objetivos generales y específicos.
+
+                                                                                                * Análisis de la estructura de bases de datos necesarias para soportar múltiples cines, funciones y reservas simultáneas.
+
+________________
+
+
+Diseño
+En esta fase se definió la arquitectura general de la aplicación web, respetando principios de modularidad, escalabilidad y seguridad. Las decisiones clave incluyeron:
+                                                                                                   * Estructura MVC (Modelo-Vista-Controlador): para separar la lógica de negocio, la presentación y el control de flujo de datos.
+
+                                                                                                   * Diseño de base de datos relacional: para manejar usuarios, películas, funciones, salas, asientos y reservas.
+
+                                                                                                   * Diseño responsivo: utilizando Bootstrap 5, permitiendo el uso fluido desde cualquier dispositivo.
+
+                                                                                                   * Sistema de roles y autenticación: diferenciando entre usuarios regulares y administradores mediante middleware.
+
+________________
+
+
+Desarrollo
+La etapa de desarrollo se dividió en fases progresivas:
+                                                                                                      1. Configuración del entorno y base de datos: estructura inicial con Laravel y MySQL.
+
+                                                                                                      2. Implementación del sistema de autenticación: registro, inicio de sesión y protección de rutas según rol.
+
+                                                                                                      3. Módulo de gestión de películas y funciones: permitiendo el ABM de películas y la asignación de horarios sin solapamientos.
+
+                                                                                                      4. Reserva de entradas: incluyendo la selección de asientos, cálculo automático de precio y visualización/cancelación de reservas.
+
+                                                                                                      5. Panel administrativo: para la gestión avanzada del sistema e informes de rendimiento.
+
+                                                                                                      6. Interfaz de usuario: con validaciones dinámicas, interactividad para selección de asientos y experiencia de usuario mejorada.
+
+________________
+
+
+Pruebas
+Antes del despliegue se realizaron diferentes pruebas para garantizar el correcto funcionamiento y la seguridad del sistema:
+                                                                                                         * Pruebas de usabilidad: verificando que la navegación sea clara y lógica para el usuario final.
+
+                                                                                                         * Pruebas funcionales: asegurando que cada módulo (registro, reserva, cancelación, gestión de películas, etc.) se comportara correctamente.
+
+
+                                                                                                         * Pruebas de seguridad: incluyendo protección de rutas sensibles mediante middleware y cifrado de contraseñas con bcrypt.
+Diseño del Sistema
+En el diseño del sistema de Take Your Seat, se ha tenido en cuenta la necesidad de ofrecer una plataforma escalable, intuitiva y funcional para la reserva de entradas de cine, tanto para usuarios comunes como para administradores. Se ha optado por una arquitectura cliente-servidor, donde el servidor actúa como intermediario entre la base de datos y la interfaz de usuario, proporcionando servicios web que permiten consultar, modificar y almacenar información relacionada con películas, funciones, reservas y usuarios.
+El sistema está diseñado para ser modular y escalable, implementado bajo el patrón de diseño MVC (Modelo-Vista-Controlador). Este enfoque permite separar:
+                                                                                                            * Modelo: Lógica de negocio y gestión de datos (películas, horarios, usuarios, reservas).
+
+                                                                                                            * Vista: Interfaz del usuario desarrollada con Bootstrap y JavaScript para facilitar la experiencia visual e interactividad.
+
+                                                                                                            * Controlador: Encargado de gestionar la lógica de las rutas, validaciones, control de acceso y conexión con los modelos.
+
+Esta separación permite un mantenimiento más ordenado del código, facilita la implementación de nuevas funcionalidades (como reportes estadísticos o integración con pasarelas de pago) y hace posible escalar la aplicación para integrar nuevos cines sin necesidad de rehacer el sistema.
+Arquitectura de la Aplicación
+La arquitectura de Take Your Seat se basa en el patrón MVC (Modelo-Vista-Controlador), lo que permite una separación clara entre la lógica de negocio, la presentación de datos y el control de flujo. Esta estructura modular facilita el mantenimiento, la escalabilidad del sistema y la incorporación de nuevas funcionalidades, como la integración de múltiples cines.
+▪ Modelo
+                                                                                                               * Encargado de gestionar los datos de la aplicación y aplicar la lógica de negocio.
+
+                                                                                                               * Incluye la gestión de entidades clave como usuarios, películas, horarios, asientos y reservas.
+
+                                                                                                               * Se asegura de evitar solapamientos de funciones y sobre-reservas mediante validaciones en tiempo real.
+
+                                                                                                               * Tecnologías utilizadas: MySQL como motor de base de datos, lógica de negocio implementada en PHP mediante Laravel.
+
+▪ Vista
+                                                                                                                  * Responsable de la interfaz con la que interactúa el usuario.
+
+                                                                                                                  * Presenta las funcionalidades disponibles como búsqueda de películas, selección de asientos, y gestión de reservas.
+
+                                                                                                                  * Adaptada para usuarios regulares y administradores, ofreciendo una experiencia fluida en cualquier dispositivo.
+
+                                                                                                                  * Tecnologías utilizadas: HTML5, CSS3, Bootstrap 5 y JavaScript para validaciones dinámicas e interactividad.
+
+▪ Controlador
+                                                                                                                     * Actúa como intermediario entre el modelo y la vista.
+
+                                                                                                                     * Procesa las solicitudes HTTP (por ejemplo, hacer una reserva o crear una película), realiza validaciones y gestiona las respuestas.
+
+                                                                                                                     * Controla el acceso a funcionalidades sensibles mediante middleware según el rol del usuario.
+
+                                                                                                                     * Tecnologías utilizadas: Laravel (PHP), con middleware personalizado para la protección de rutas y control de sesiones.
+
+________________
+
+
+Diagramas de Flujo
+Para garantizar una implementación coherente y prevenir errores en los procesos críticos del sistema, se han elaborado diagramas de flujo detallados que representan los pasos de las principales funcionalidades de la plataforma.
+▪ Ejemplo:
+                                                                                                                        * Flujo de reserva de entradas: desde que el usuario selecciona una película, elige la función, escoge los asientos y realiza la confirmación final. Se incluye control en tiempo real para bloquear los asientos ya reservados.
+
+________________
+
+
+Diseño de la Base de Datos
+El sistema utiliza una base de datos relacional, optimizada para manejar múltiples cines, funciones simultáneas y un gran número de reservas sin pérdida de rendimiento. El diseño busca mantener la integridad de los datos y facilitar consultas complejas, como reportes por película o recuento de ocupación.
+▪ Entidades principales:
+                                                                                                                           * usuarios: información básica y rol (usuario o administrador).
+
+                                                                                                                           * peliculas: título, descripción, género, imagen, etc.
+
+                                                                                                                           * horarios: función específica con fecha y hora.
+
+                                                                                                                           * reservas: asiento, estado, usuario, horario y precio total.
+
+                                                                                                                           * asientos: asociados a una sala por función.
+
+▪ Relaciones destacadas:
+                                                                                                                              * Un usuario puede tener muchas reservas.
+
+                                                                                                                              * Una película puede tener varios horarios.
+
+                                                                                                                              * Un horario puede tener múltiples reservas.
+
+                                                                                                                              * Las reservas se asocian a asientos específicos para prevenir duplicaciones.
+
+________________
+
+
+Modelo Entidad-Relación (ERD)
+Se ha diseñado un diagrama E/R que representa gráficamente las entidades del sistema y sus relaciones. Este modelo permite entender con claridad la estructura de datos y cómo interactúan entre sí, siendo esencial para el desarrollo y futuras extensiones del sistema.
+                                                                                                                                 * El ERD incluye las tablas: usuarios, peliculas, horarios, reservas, y asientos.
+
+                                                                                                                                 * Refleja relaciones como:
+
+                                                                                                                                    * usuarios → reservas (1:N)
+
+                                                                                                                                    * peliculas → horarios (1:N)
+
+                                                                                                                                    * horarios → reservas (1:N)
+
+                                                                                                                                    * reservas → asientos (1:1 por reserva)
+Desarrollo
+Durante el desarrollo de Take Your Seat, se han empleado tecnologías actuales y robustas tanto en el frontend como en el backend, con el objetivo de crear una plataforma segura, escalable y fácil de usar para la reserva de entradas de cine.
+1. Backend
+                                                                                                                                       * Laravel (PHP): Framework robusto que permite una arquitectura clara y estructurada bajo el patrón MVC. Facilita el desarrollo de rutas, controladores, modelos y autenticación.
+
+                                                                                                                                       * MySQL: Sistema de gestión de bases de datos relacional utilizado para almacenar usuarios, películas, reservas, funciones y asientos.
+
+                                                                                                                                       * bcrypt: Utilizado para el hash de contraseñas de manera segura.
+
+                                                                                                                                       * Middleware personalizado: Se ha implementado control de acceso para diferenciar funcionalidades disponibles entre usuarios comunes y administradores.
+
+2. Frontend
+                                                                                                                                          * HTML5 y CSS3: Para la estructura y el diseño de las vistas.
+
+                                                                                                                                          * Bootstrap 5: Utilizado para lograr un diseño responsive que se adapta a diferentes dispositivos.
+
+                                                                                                                                          * JavaScript: Añade interactividad a la interfaz, por ejemplo, en la selección de asientos y validaciones en formularios.
+
+________________
+
+
+Descripción de las Funcionalidades Implementadas
+1. Gestión y Visualización de Películas
+                                                                                                                                             * Los usuarios pueden ver todas las películas disponibles, con su cartel, descripción, duración y género.
+
+                                                                                                                                             * Los administradores pueden crear, editar y eliminar películas desde un panel de control protegido.
+
+2. Selección de Funciones y Reserva de Entradas
+                                                                                                                                                * El usuario puede ver los horarios disponibles por película.
+
+                                                                                                                                                * Una vez seleccionada una función, el sistema muestra los asientos disponibles en tiempo real.
+
+                                                                                                                                                * Se evita la doble reserva mediante bloqueos por función y asiento.
+
+3. Gestión de Asientos
+                                                                                                                                                   * Cada asiento está vinculado a una sala y a una función específica.
+
+                                                                                                                                                   * El sistema muestra visualmente los asientos ocupados y disponibles mediante colores diferenciados.
+
+4. Gestión de Reservas
+                                                                                                                                                      * Los usuarios pueden hacer una reserva indicando cantidad de entradas y asientos deseados.
+
+                                                                                                                                                      * El sistema calcula automáticamente el precio total.
+
+                                                                                                                                                      * Los datos de reserva se almacenan en la base de datos y pueden ser consultados desde el perfil del usuario.
+
+5. Sistema de Autenticación
+                                                                                                                                                         * Los usuarios deben registrarse e iniciar sesión para acceder a la funcionalidad completa (por ejemplo, reservas).
+
+                                                                                                                                                         * La información de la sesión se gestiona mediante el sistema de autenticación de Laravel, con roles diferenciados (usuario y administrador).
+
+                                                                                                                                                         * Las contraseñas se almacenan de forma segura usando bcrypt.
+
+6. Panel de Administración
+                                                                                                                                                            * El administrador tiene acceso a un panel donde puede gestionar películas, funciones, precios y revisar el historial de reservas.
+
+                                                                                                                                                            * Se realiza una validación para que solo los usuarios con permisos de administración puedan acceder a estas funcionalidades.
+
+________________
+
+
+Integración de Servicios Externos
+Actualmente, Take Your Seat no utiliza APIs externas ni servicios en la nube. Sin embargo, para futuras versiones se contempla la posibilidad de integrar:
+                                                                                                                                                               * Pasarelas de pago para procesar pagos online.
+
+                                                                                                                                                               * APIs de películas (por ejemplo, TMDB) para automatizar la carga de información de películas.
+
+                                                                                                                                                               * Servicios en la nube para almacenamiento de imágenes y escalabilidad de la base de datos.
+
+________________
+
+
+Funciones más importantes del Backend
+                                                                                                                                                                  * Gestión CRUD de películas, funciones y reservas.
+
+                                                                                                                                                                  * Control de acceso y roles (usuario vs administrador).
+
+                                                                                                                                                                  * Bloqueo de asientos ocupados en tiempo real.
+
+                                                                                                                                                                  * Cálculo automático de precio total por reserva.
+
+                                                                                                                                                                  * Protección de rutas sensibles mediante middleware.
+
+                                                                                                                                                                  * Hash seguro de contraseñas con bcrypt.
+
+Pruebas y Validación
+Durante el desarrollo de Take Your Seat, se llevaron a cabo múltiples pruebas funcionales con el fin de asegurar la correcta operación de las principales características del sistema:
+                                                                                                                                                                     * Pruebas en el registro e inicio de sesión de usuarios: Se verificó que los formularios validan correctamente los datos introducidos, y que las credenciales cifradas permiten acceder de forma segura a las funcionalidades reservadas.
+
+                                                                                                                                                                     * Pruebas de reserva de entradas: Se comprobó que el sistema permite seleccionar asientos disponibles, guardar la reserva en la base de datos y bloquear los asientos elegidos para evitar solapamientos.
+
+                                                                                                                                                                     * Pruebas de panel de administración: Los administradores pueden crear, editar y eliminar películas y funciones. Se validó que los permisos de administrador funcionan correctamente.
+
+                                                                                                                                                                     * Pruebas de visualización y lógica de negocio: Se verificó que los asientos ocupados se muestran en rojo, los libres en verde, y que el total a pagar se calcula correctamente según la cantidad de entradas seleccionadas.
+
+Ejemplo visual: Se adjuntan capturas de pantalla del formulario de registro e inicio de sesión como evidencia de la interfaz implementada y la validación realizada.
+________________
+
+
+Seguridad
+La aplicación incorpora varias medidas de seguridad orientadas a proteger tanto los datos personales de los usuarios como la integridad del sistema:
+1. Autenticación segura
+                                                                                                                                                                        * El sistema de autenticación se ha desarrollado utilizando las características nativas de Laravel, aprovechando su robusto sistema de autenticación y autorización. Se utilizó el sistema de middleware para proteger las rutas sensibles y la función helper bcrypt() de Laravel para el cifrado seguro de contraseñas. La implementación de roles (usuario y administrador) se realizó de manera efectiva para controlar el acceso a diferentes partes del sistema.
+
+                                                                                                                                                                        * Solo los usuarios registrados pueden realizar reservas y acceder a su perfil personal.
+
+2. Cifrado de contraseñas
+                                                                                                                                                                           * Las contraseñas se cifran utilizando bcrypt, lo que asegura que no se almacenen en texto plano.
+
+                                                                                                                                                                           * bcrypt genera un "salt" único por cada contraseña, haciendo que incluso si dos usuarios usan la misma contraseña, los hashes resultantes sean diferentes.
+
+                                                                                                                                                                           * Este enfoque protege eficazmente contra ataques de diccionario o fuerza bruta.
+
+3. Gestión de datos sensibles
+                                                                                                                                                                              * Los datos del usuario, como reservas o credenciales, son tratados de forma privada y almacenados de manera segura en la base de datos.
+
+                                                                                                                                                                              * Las rutas sensibles están protegidas por middleware personalizado, que restringe el acceso dependiendo del rol del usuario (usuario o administrador).
+
+________________
+
+
+Conclusiones
+El desarrollo de Take Your Seat ha supuesto una evolución importante desde el proyecto anterior, el cual se centraba en un sitio más estático sin interacción real con el backend. Este nuevo proyecto ha sido mucho más completo, ofreciendo funcionalidades prácticas y realistas como:
+                                                                                                                                                                                 * Gestión dinámica de películas, funciones y reservas.
+
+                                                                                                                                                                                 * Sistema de autenticación y roles de usuario.
+
+                                                                                                                                                                                 * Interfaz visual para la selección de asientos y cálculo automático de precios.
+
+A pesar de contar con menos tiempo tras el cambio de proyecto, se ha logrado construir una plataforma funcional, atractiva y segura para la reserva de entradas de cine. El sistema puede ampliarse fácilmente en futuras iteraciones, por ejemplo, añadiendo pasarelas de pago o APIs externas de películas.
+En resumen, el proyecto ha permitido aplicar de forma práctica conceptos clave como la arquitectura MVC, la gestión de base de datos relacional, la seguridad de usuarios, y la interacción dinámica con el frontend.
+________________
+
+
+
+
+Dificultades Encontradas y Cómo se Superaron
+Durante el desarrollo de PRfit surgieron varios desafíos técnicos, especialmente al trabajar con funcionalidades completas de backend y la gestión de bases de datos relacionales. A continuación, detallo los problemas principales y cómo fueron solucionados:
+                                                                                                                                                                                    * Backend y sistema de autenticación:
+Al principio intenté implementar la autenticación con la API de Google, pero requería un sistema de tokens de corta duración que complicaba mucho su configuración y no me daba tiempo para tener algo estable y funcional a tiempo. Por eso decidí implementar yo mismo el sistema de registro e inicio de sesión, usando Node.js, Express.js y bcrypt para cifrar las contraseñas.
+
+                                                                                                                                                                                    * Rutas y guardado de datos:
+La estructura de rutas se implementó siguiendo las convenciones de Laravel, lo que facilitó la organización y mantenimiento del código. La gestión de datos en MySQL se realizó de manera eficiente utilizando las migraciones y modelos de Laravel, lo que permitió un control preciso sobre la estructura de la base de datos y las relaciones entre tablas.
+
+                                                                                                                                                                                    * Optimización de CSS:
+Al inicio del proyecto, se planteó crear archivos styles.css individuales para cada componente, pero esta aproximación resultaba en código duplicado y dificultaba el mantenimiento. Como solución, se implementó un sistema centralizado utilizando las plantillas de layout y app.css de Laravel, lo que permitió optimizar y reutilizar los estilos en todo el proyecto.
+
+Mejoras Futuras:
+
+1. Sistema de Filtrado por Cines:
+   - Implementar filtros específicos para cada cine
+   - Añadir búsqueda por ubicación y características
+   - Permitir comparación de precios entre cines
+
+2. Optimización de Código:
+   - Mejorar la organización de archivos CSS eliminando estilos inline residuales
+   - Refactorizar componentes para mejor separación de responsabilidades
+   - Implementar un sistema más robusto de layouts
+
+3. Panel de Administración Mejorado:
+   - Añadir gestión completa de usuarios
+   - Implementar sistema para promover/revocar permisos de administrador
+   - Incluir métricas y estadísticas de uso
+
+4. Experiencia de Usuario:
+   - Implementar notificaciones en tiempo real
+   - Añadir recordatorios de funciones próximas
+   - Mejorar la interfaz de selección de asientos
+   - Sistema de reseñas y valoraciones
+
+5. Rendimiento:
+   - Implementar sistema de caché
+   - Optimizar consultas a la base de datos
+   - Mejorar la carga de imágenes
