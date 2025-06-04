@@ -1,777 +1,654 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="booking-container fade-in">
-    <div class="booking-header text-center mb-4">
-        <h1><i class="fas fa-ticket-alt"></i> Reserva de Entradas</h1>
-        <p class="movie-title">{{ $pelicula->titulo }}</p>
-    </div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h2 class="mb-0"><i class="fas fa-ticket-alt"></i> Reservar Entradas</h2>
+                </div>
 
-    <div class="booking-content">
-        <div class="movie-summary card mb-4">
-            <div class="card-body">
-                <div class="d-flex gap-4">
-                    <div class="movie-poster-small">
-                        @if($pelicula->imagen)
-                            <img src="{{ $pelicula->imagen }}" 
-                                alt="{{ $pelicula->titulo }}" 
-                                class="img-fluid rounded">
-                        @else
-                            <div class="no-poster">
-                                <i class="fas fa-film fa-3x"></i>
+                <div class="card-body">
+                    <div class="movie-info mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                @if($pelicula->imagen)
+                                    <img src="{{ asset($pelicula->imagen) }}" 
+                                         alt="{{ $pelicula->titulo }}" 
+                                         class="img-fluid rounded">
+                                @else
+                                    <div class="no-image-placeholder">
+                                        <i class="fas fa-film fa-4x"></i>
+                                    </div>
+                                @endif
                             </div>
-                        @endif
-                    </div>
-                    <div class="movie-info">
-                        <h3>{{ $pelicula->titulo }}</h3>
-                        <div class="movie-meta">
-                            <span><i class="fas fa-clock"></i> {{ $pelicula->duracion }} min</span>
-                            <span><i class="fas fa-tag"></i> {{ $pelicula->genero }}</span>
+                            <div class="col-md-8">
+                                <h3>{{ $pelicula->titulo }}</h3>
+                                <p>
+                                    <i class="fas fa-clock"></i> {{ $pelicula->duracion }} minutos |
+                                    <i class="fas fa-star"></i> {{ $pelicula->clasificacion }}
+                                </p>
+                                <p>{{ $pelicula->descripcion }}</p>
+                            </div>
                         </div>
                     </div>
+
+                    @if($horarios->isEmpty())
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> No hay horarios disponibles para esta película.
+                        </div>
+                    @else
+                        <form action="{{ route('reservas.store') }}" method="POST" id="reservaForm">
+                            @csrf
+                            
+                            <div class="horarios-container mb-4">
+                                <h4 class="mb-3"><i class="fas fa-calendar-alt"></i> Horarios Disponibles</h4>
+                                <div class="horarios-grid">
+                                    @foreach($horarios as $horario)
+                                        <div class="horario-card" data-horario-id="{{ $horario->id }}">
+                                            <div class="horario-info">
+                                                <div class="fecha">
+                                                    <i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($horario->fecha)->format('d/m/Y') }}
+                                                </div>
+                                                <div class="hora">
+                                                    <i class="fas fa-clock"></i> {{ \Carbon\Carbon::parse($horario->hora)->format('H:i') }}
+                                                </div>
+                                                <div class="sala">
+                                                    <i class="fas fa-door-open"></i> Sala {{ $horario->sala }}
+                                                </div>
+                                                <div class="disponibles">
+                                                    <i class="fas fa-chair"></i> {{ $horario->asientos_disponibles }} asientos libres
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="horario_id" id="horario_id">
+                            <input type="hidden" name="cantidad_asientos" id="cantidad_asientos">
+                            <input type="hidden" name="asientos" id="asientos-seleccionados">
+
+                            <div id="asientos-container" class="mb-4" style="display: none;">
+                                <h4 class="mb-3">Selección de Asientos <span id="horario-seleccionado"></span></h4>
+                                <div class="text-center mb-3">
+                                    <div class="screen">PANTALLA</div>
+                                    <div class="seat-map">
+                                        @foreach(range('A', 'H') as $fila)
+                                            <div class="seat-row">
+                                                <span class="row-label">{{ $fila }}</span>
+                                                @foreach(range(1, 10) as $numero)
+                                                    <div class="seat" 
+                                                         data-asiento="{{ $fila }}{{ $numero }}"
+                                                         data-toggle="tooltip"
+                                                         title="Asiento {{ $fila }}{{ $numero }}">
+                                                        <span class="seat-icon"><i class="fas fa-chair"></i></span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="seat-info text-center mb-3">
+                                    <div class="d-inline-block mx-3">
+                                        <div class="seat-example available"><i class="fas fa-chair"></i></div>
+                                        <span>Disponible</span>
+                                    </div>
+                                    <div class="d-inline-block mx-3">
+                                        <div class="seat-example selected"><i class="fas fa-chair"></i></div>
+                                        <span>Seleccionado</span>
+                                    </div>
+                                    <div class="d-inline-block mx-3">
+                                        <div class="seat-example occupied"><i class="fas fa-times"></i></div>
+                                        <span>Ocupado</span>
+                                    </div>
+                                </div>
+                                <div class="text-center mb-3">
+                                    <span class="badge bg-primary" id="asientos-count"></span>
+                                </div>
+
+                                <!-- Resumen de compra -->
+                                <div id="resumen-compra" class="card bg-dark mb-4" style="display: none;">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Resumen de tu compra</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>Asientos seleccionados:</strong> <span id="asientos-lista"></span></p>
+                                                <p><strong>Precio por asiento:</strong> 8,00 €</p>
+                                                <p><strong>Total a pagar:</strong> <span id="precio-total">0,00 €</span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Película:</strong> {{ $pelicula->titulo }}</p>
+                                                <p><strong>Fecha:</strong> <span id="resumen-fecha"></span></p>
+                                                <p><strong>Hora:</strong> <span id="resumen-hora"></span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Pasarela de pago -->
+                                <div id="pasarela-pago" class="card bg-dark mb-4" style="display: none;">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-credit-card"></i> Método de pago</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Número de tarjeta</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
+                                                    <input type="text" class="form-control" placeholder="1234 5678 9012 3456" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titular de la tarjeta</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Nombre del titular" disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Fecha de caducidad</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                                    <input type="text" class="form-control" placeholder="MM/AA" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">CVV</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                                    <input type="text" class="form-control" placeholder="123" disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="payment-methods text-center mb-3">
+                                            <i class="fab fa-cc-visa fa-2x mx-2"></i>
+                                            <i class="fab fa-cc-mastercard fa-2x mx-2"></i>
+                                            <i class="fab fa-cc-amex fa-2x mx-2"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ route('peliculas.index') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Volver
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" id="btn-confirmar" style="display: none;">
+                                        <i class="fas fa-check-circle"></i> Confirmar y Pagar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>
-
-        <form action="{{ route('reservas.storeDesdeHorario', $horario) }}" method="POST" class="booking-form" id="reservaForm">
-            @csrf
-            <input type="hidden" name="pelicula_id" value="{{ $pelicula->id }}">
-            <input type="hidden" name="horario_id" value="{{ $horario->id }}">
-            
-            <div class="form-section card mb-4">
-                <div class="card-body">
-                    <h3><i class="fas fa-calendar-alt"></i> Horario Seleccionado</h3>
-                    
-                    <div class="selected-showtime mt-3">
-                        <div class="showtime-info">
-                            <div class="date">
-                                <i class="fas fa-calendar"></i>
-                                {{ \Carbon\Carbon::parse($horario->fecha)->format('d/m/Y') }}
-                            </div>
-                            <div class="time">
-                                <i class="fas fa-clock"></i>
-                                {{ \Carbon\Carbon::parse($horario->hora)->format('H:i') }}
-                            </div>
-                            <div class="sala">
-                                <i class="fas fa-door-open"></i>
-                                Sala {{ $horario->sala }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section card mb-4">
-                <div class="card-body">
-                    <h3><i class="fas fa-chair"></i> Selecciona tus Asientos</h3>
-                    
-                    <div class="seats-container mt-3">
-                        <div class="screen mb-4">
-                            <div class="screen-label">PANTALLA</div>
-                        </div>
-                        
-                        <div class="seats-grid">
-                            @php
-                                // Generar algunos asientos ocupados aleatoriamente
-                                $asientosOcupados = [];
-                                $numAsientosOcupados = rand(5, 10); // Entre 5 y 10 asientos ocupados
-                                
-                                while (count($asientosOcupados) < $numAsientosOcupados) {
-                                    $fila = rand(1, 8);
-                                    $columna = rand(1, 10);
-                                    $asiento = chr(64 + $fila) . $columna;
-                                    $asientosOcupados[$asiento] = true;
-                                }
-                            @endphp
-
-                            @for($fila = 1; $fila <= 8; $fila++)
-                                <div class="seat-row">
-                                    <div class="seat-letter">{{ chr(64 + $fila) }}</div>
-                                    @for($columna = 1; $columna <= 10; $columna++)
-                                        @php
-                                            $asientoId = chr(64 + $fila) . $columna;
-                                            $estaOcupado = isset($asientosOcupados[$asientoId]);
-                                        @endphp
-                                        <div class="seat-wrapper">
-                                            <input type="checkbox" 
-                                                name="asientos[]" 
-                                                id="asiento_{{ $fila }}_{{ $columna }}" 
-                                                value="{{ $asientoId }}"
-                                                class="seat-checkbox"
-                                                {{ $estaOcupado ? 'disabled' : '' }}>
-                                            <label for="asiento_{{ $fila }}_{{ $columna }}" 
-                                                class="seat {{ $estaOcupado ? 'occupied' : '' }}">
-                                                <i class="fas fa-chair"></i>
-                                            </label>
-                                        </div>
-                                    @endfor
-                                </div>
-                            @endfor
-                        </div>
-
-                        <div class="seats-legend mt-4">
-                            <div class="legend-item">
-                                <div class="seat-example available">
-                                    <i class="fas fa-chair"></i>
-                                </div>
-                                <span>Disponible</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="seat-example selected">
-                                    <i class="fas fa-chair"></i>
-                                </div>
-                                <span>Seleccionado</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="seat-example occupied">
-                                    <i class="fas fa-chair"></i>
-                                </div>
-                                <span>Ocupado</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="booking-summary card mb-4">
-                <div class="card-body">
-                    <h3><i class="fas fa-receipt"></i> Resumen de la Reserva</h3>
-                    
-                    <div class="summary-details mt-3">
-                        <div class="summary-row">
-                            <span>Película:</span>
-                            <span>{{ $pelicula->titulo }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Asientos seleccionados:</span>
-                            <span id="selected-seats">-</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Precio por asiento:</span>
-                            <span>8,00 €</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total:</span>
-                            <span id="total-price">0,00 €</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Nueva sección de pago -->
-            <div class="payment-section card mb-4">
-                <div class="card-body">
-                    <h3><i class="fas fa-credit-card"></i> Método de Pago</h3>
-                    
-                    <div class="credit-card-display mt-3">
-                        <div class="credit-card">
-                            <div class="credit-card-header">
-                                <div class="chip"></div>
-                                <i class="fab fa-cc-visa card-logo"></i>
-                            </div>
-                            <div class="credit-card-body">
-                                <div class="card-number">4532 9856 **** ****</div>
-                                <div class="card-info">
-                                    <div class="card-holder">
-                                        <span class="label">Titular</span>
-                                        <span class="value">USUARIO DEMO</span>
-                                    </div>
-                                    <div class="card-expiry">
-                                        <span class="label">Válida hasta</span>
-                                        <span class="value">12/25</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="payment-verified">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Pago verificado</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="booking-actions text-center">
-                <button type="submit" class="btn btn-primary btn-lg" id="btnConfirmar">
-                    <i class="fas fa-check-circle"></i> Confirmar Reserva
-                </button>
-                <a href="{{ route('peliculas.show', $pelicula) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </a>
-            </div>
-
-            <!-- Mensaje de error para asientos no seleccionados -->
-            <div class="alert alert-danger mt-3" id="errorAsientos" style="display: none;">
-                <i class="fas fa-exclamation-circle"></i> Por favor, selecciona al menos un asiento antes de confirmar.
-            </div>
-        </form>
     </div>
-    </div>
+</div>
 
-    <style>
-.booking-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 2rem;
-    color: white;
-}
-
-.movie-poster-small {
-    width: 120px;
-    height: 180px;
-    overflow: hidden;
-}
-
-.movie-poster-small img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.movie-info h3 {
-    color: white;
-    margin-bottom: 1rem;
-}
-
-.movie-meta {
-    color: var(--text-light);
-}
-
-.movie-meta span {
-    margin-right: 1.5rem;
+<style>
+.no-image-placeholder {
+    background-color: var(--background-lighter);
+    border-radius: 8px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-gray);
 }
 
 .card {
-    background-color: var(--background-light);
-    border: 1px solid var(--border-color);
+    border-color: var(--border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.card-body {
-    color: white;
+.card-header {
+    background-color: var(--background-lighter);
+    border-bottom-color: var(--border-color);
 }
 
-.card-body h3 {
-    color: white;
-    margin-bottom: 1.5rem;
+.movie-info {
+    background-color: var(--background-lighter);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.showtimes-grid {
-            display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+.alert {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+/* Estilos para los horarios */
+.horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
+    margin-bottom: 2rem;
 }
 
-.showtime-option input[type="radio"] {
-    display: none;
-}
-
-.showtime-option input[type="radio"]:checked + label .showtime-card {
-    border-color: var(--primary-color);
-    background-color: rgba(52, 152, 219, 0.1);
-}
-
-.showtime-card {
+.horario-card {
+    background: var(--background-lighter);
+    border-radius: 12px;
+    padding: 1.2rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    background-color: var(--background-dark);
-    padding: 0.5rem;
-    margin: 0.5rem;
-    border-radius: 8px;
+    border: 2px solid transparent;
 }
 
-.showtime-info {
-    color: white;
-    padding: 1rem;
+.horario-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    border-color: var(--primary-color);
 }
 
-.showtime-info div {
-    margin-bottom: 0.8rem;
+.horario-card.selected {
+    background: var(--background-light);
+    border-color: var(--primary-color);
+}
+
+.horario-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.horario-info > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 1.1rem;
 }
 
-.showtime-info .date {
-    font-weight: bold;
-    color: #fff;
-}
-
-.showtime-info .time {
-    color: #e0e0e0;
-}
-
-.showtime-info .sala {
-    color: #cccccc;
-}
-
-.screen-label {
-    position: absolute;
-    width: 100%;
+.horario-info i {
+    width: 20px;
     text-align: center;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: var(--primary-color);
 }
 
-.seat-letter {
-    color: white;
-}
-
-.seats-legend span {
-    color: white;
-}
-
-.summary-details {
-    color: white;
-}
-
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.8rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.summary-row.total {
-    border-top: 2px solid rgba(255, 255, 255, 0.2);
-    border-bottom: none;
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-}
-
-.text-gray {
-    color: var(--text-light) !important;
-}
-
-.booking-header h1 {
-    color: white;
-    margin-bottom: 0.5rem;
-}
-
-.showtime-card:hover {
-    transform: translateY(-2px);
-}
-
+/* Estilos para el mapa de asientos */
 .screen {
-    background: linear-gradient(to bottom, #ffffff22, transparent);
-    height: 50px;
-    position: relative;
-    border-radius: 50% 50% 0 0;
+    background: linear-gradient(45deg, #2b2b2b, #3a3a3a);
+    height: 40px;
+    width: 80%;
+    margin: 0 auto 40px;
+    transform: perspective(300px) rotateX(-10deg);
+    box-shadow: 0 3px 10px rgba(255,255,255,0.1);
+    text-align: center;
+    line-height: 40px;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 5px;
+    font-size: 1.2rem;
 }
 
-.seats-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
+.seat-map {
+    display: inline-block;
+    background: rgba(0,0,0,0.2);
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
 }
 
 .seat-row {
     display: flex;
-    gap: 0.5rem;
     align-items: center;
+    margin-bottom: 12px;
 }
 
-.seat-wrapper {
-    position: relative;
+.row-label {
+    margin-right: 15px;
+    width: 25px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-light);
 }
 
-.seat-checkbox {
-    display: none;
-        }
-
-        .seat {
+.seat {
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 35px;
-    height: 35px;
-            cursor: pointer;
-    transition: all 0.3s ease;
-    color: var(--text-gray);
-    position: relative;
-}
-
-.seat i {
-    font-size: 1.4rem;
+    cursor: pointer;
+    background-color: var(--background-lighter);
+    color: var(--text-light);
     transition: all 0.3s ease;
 }
 
 .seat:hover:not(.occupied) {
     transform: scale(1.1);
-    color: #ffa500; /* Color naranja para hover */
+    background-color: var(--primary-color);
 }
 
-.seat-checkbox:checked + .seat {
-    color: #ffa500; /* Color naranja para seleccionado */
-    transform: scale(1.1);
-        }
+.seat.selected {
+    background-color: var(--primary-color);
+    transform: scale(1.05);
+}
 
-        .seat.occupied {
-    color: #ff4444; /* Color rojo para ocupado */
-            cursor: not-allowed;
-    opacity: 0.8;
+.seat.selected i {
+    color: white;
+}
+
+.seat.occupied {
+    background-color: #ff4444 !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.seat.occupied .seat-icon {
+    color: white;
 }
 
 .seat.occupied:hover {
-    transform: none;
+    transform: none !important;
+    background-color: #ff4444 !important;
+}
+
+.seat-icon {
+    font-size: 1.2rem;
+}
+
+.seat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.seat.selected .seat-label {
+    color: white;
+}
+
+.seat-info {
+    margin-top: 25px;
+    background: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 8px;
+    display: inline-block;
 }
 
 .seat-example {
-    width: 35px;
-    height: 35px;
-    display: flex;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
-}
-
-.seat-example.available {
-    color: var(--text-gray);
+    border-radius: 8px;
+    margin-bottom: 5px;
+    background-color: var(--background-lighter);
 }
 
 .seat-example.selected {
-    color: #ffa500; /* Color naranja para ejemplo de seleccionado */
+    background-color: var(--primary-color);
+    color: white;
 }
 
 .seat-example.occupied {
-    color: #ff4444; /* Color rojo para ejemplo de ocupado */
-}
-
-.seats-legend {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-top: 2rem;
-    padding: 1rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.5rem 1rem;
-}
-
-/* Añadir efecto de hover suave para los asientos disponibles */
-.seat:not(.occupied)::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 165, 0, 0.1);
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.seat:not(.occupied):hover::after {
-    opacity: 1;
-}
-
-/* Efecto de pulso para asientos seleccionados */
-@keyframes seatPulse {
-    0% { transform: scale(1.1); }
-    50% { transform: scale(1.15); }
-    100% { transform: scale(1.1); }
-}
-
-.seat-checkbox:checked + .seat {
-    animation: seatPulse 2s infinite;
-}
-
-.booking-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-}
-
-.movie-title {
-    font-size: 2.5rem;
-    color: #ff4444;
-    margin: 1rem 0;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-@media (max-width: 768px) {
-    .seats-grid {
-        transform: scale(0.8);
-        transform-origin: center top;
-    }
-}
-
-.selected-showtime {
     background-color: var(--background-dark);
-    border: 1px solid var(--border-color);
+    opacity: 0.5;
+}
+
+.badge {
+    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 1.1rem;
     border-radius: 8px;
-    padding: 1.5rem;
-    text-align: center;
-}
-
-.selected-showtime .showtime-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-}
-
-.selected-showtime .showtime-info div {
-    font-size: 1.2rem;
-            color: white;
-}
-
-.selected-showtime .showtime-info i {
-    color: var(--primary-color);
-    margin-right: 0.8rem;
-    width: 20px;
-    text-align: center;
-}
-
-.selected-showtime .date {
-    font-weight: bold;
-    color: #fff !important;
-}
-
-.selected-showtime .time {
-    color: #e0e0e0 !important;
-}
-
-.selected-showtime .sala {
-    color: #cccccc !important;
-}
-
-.alert {
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.alert-danger {
-    background-color: rgba(220, 53, 69, 0.1);
-    border: 1px solid rgba(220, 53, 69, 0.2);
-    color: #ff6b6b;
-}
-
-.alert i {
-    font-size: 1.2rem;
-}
-
-/* Efecto de shake para el mensaje de error */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-
-.shake {
-    animation: shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-.btn-primary {
-    background: linear-gradient(45deg, #dc3545 0%, #e35d6a 100%);
-    border: none;
-    padding: 1rem 2rem;
-    font-weight: bold;
     transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-/* Estilos para la sección de pago */
-.payment-section {
-    background-color: var(--background-light);
-    border: 1px solid var(--border-color);
+/* Animaciones */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
-.credit-card-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+.seat.selected {
+    animation: pulse 1s infinite;
 }
 
-.credit-card {
-    width: 340px;
-    height: 200px;
-    background: linear-gradient(135deg, #434343 0%, #000000 100%);
-    border-radius: 15px;
-    padding: 20px;
-    color: white;
-    position: relative;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.payment-methods i {
+    color: var(--text-gray);
+    transition: all 0.3s ease;
 }
 
-.credit-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.payment-methods i:hover {
+    color: var(--primary-color);
 }
 
-.chip {
-    width: 45px;
-    height: 35px;
-    background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
-    border-radius: 5px;
-    position: relative;
+.input-group-text {
+    background-color: var(--background-lighter);
+    border-color: var(--border-color);
+    color: var(--text-light);
 }
 
-.chip::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 35px;
-    height: 25px;
-    background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
-    border-radius: 3px;
-    border: 1px solid rgba(0, 0, 0, 0.3);
+.form-control:disabled {
+    background-color: var(--background-lighter);
+    border-color: var(--border-color);
+    color: var(--text-gray);
+    cursor: not-allowed;
 }
+</style>
 
-.card-logo {
-    font-size: 30px;
-    color: white;
-}
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const horarioCards = document.querySelectorAll('.horario-card');
+    const asientosContainer = document.getElementById('asientos-container');
+    const horarioIdInput = document.getElementById('horario_id');
+    const cantidadInput = document.getElementById('cantidad_asientos');
+    const asientosSeleccionadosInput = document.getElementById('asientos-seleccionados');
+    const horarioSeleccionadoSpan = document.getElementById('horario-seleccionado');
+    const asientosCountSpan = document.getElementById('asientos-count');
+    const btnConfirmar = document.getElementById('btn-confirmar');
+    const form = document.getElementById('reservaForm');
+    let asientosSeleccionados = [];
 
-.card-number {
-    font-family: monospace;
-    font-size: 1.5rem;
-    letter-spacing: 3px;
-    text-align: center;
-    margin: 20px 0;
-}
+    const resumenCompra = document.getElementById('resumen-compra');
+    const pasarelaPago = document.getElementById('pasarela-pago');
+    const asientosLista = document.getElementById('asientos-lista');
+    const precioTotal = document.getElementById('precio-total');
+    const resumenFecha = document.getElementById('resumen-fecha');
+    const resumenHora = document.getElementById('resumen-hora');
+    const PRECIO_POR_ASIENTO = 8.00;
 
-.card-info {
-    display: flex;
-    justify-content: space-between;
-}
-
-.card-holder, .card-expiry {
-    display: flex;
-    flex-direction: column;
-}
-
-.label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.value {
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-}
-
-.payment-verified {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #2ecc71;
-    font-size: 0.9rem;
-}
-
-.payment-verified i {
-    font-size: 1.2rem;
-}
-
-/* Animación suave para la tarjeta */
-.credit-card {
-    transition: transform 0.3s ease;
-}
-
-.credit-card:hover {
-    transform: scale(1.02);
-}
-    </style>
-
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Constantes para elementos del DOM
-    const asientos = document.querySelectorAll('.seat-checkbox');
-    const selectedSeatsElement = document.getElementById('selected-seats');
-    const totalPriceElement = document.getElementById('total-price');
-    const formulario = document.getElementById('reservaForm');
-    const errorAsientos = document.getElementById('errorAsientos');
-
-    // Constante para el precio (8 euros por asiento)
-    const PRECIO_POR_ASIENTO = 8;
-
-    // Función para formatear precio en euros
-    function formatearPrecio(precio) {
-        return precio.toLocaleString('es-ES', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) + ' €';
-    }
-
-    // Función para actualizar el resumen de la reserva
-    function actualizarResumen() {
-        const asientosSeleccionados = Array.from(asientos)
-            .filter(asiento => asiento.checked)
-            .map(asiento => asiento.value);
-        
-        // Actualizar asientos seleccionados
-        selectedSeatsElement.textContent = asientosSeleccionados.length > 0 
-            ? asientosSeleccionados.join(', ') 
-            : '-';
-        
-        // Calcular y actualizar precio total
-        const total = asientosSeleccionados.length * PRECIO_POR_ASIENTO;
-        totalPriceElement.textContent = formatearPrecio(total);
-    }
-
-    // Añadir listeners a los checkboxes de asientos
-    asientos.forEach(asiento => {
-        asiento.addEventListener('change', actualizarResumen);
-    });
-
-    // Validación del formulario
-    formulario.addEventListener('submit', function(e) {
-        const asientosSeleccionados = Array.from(asientos)
-            .filter(asiento => asiento.checked);
-
-        if (asientosSeleccionados.length === 0) {
-            e.preventDefault();
-            errorAsientos.style.display = 'flex';
-            errorAsientos.classList.remove('shake');
-            void errorAsientos.offsetWidth;
-            errorAsientos.classList.add('shake');
-            errorAsientos.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Función para cargar los asientos ocupados
+    async function cargarAsientosOcupados(horarioId) {
+        try {
+            console.log('Iniciando carga de asientos ocupados para horario:', horarioId);
+            const response = await fetch(`/api/horarios/${horarioId}/asientos-ocupados`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            });
             
-            setTimeout(() => {
-                errorAsientos.style.display = 'none';
-            }, 5000);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error en la respuesta:', response.status, errorText);
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Datos recibidos:', data);
+            if (!data.asientos) {
+                console.warn('No se recibieron asientos en la respuesta');
+            }
+            return data.asientos || [];
+        } catch (error) {
+            console.error('Error al cargar asientos:', error);
+            alert('Error al cargar los asientos ocupados. Por favor, intenta de nuevo.');
+            return [];
         }
+    }
+
+    // Función para actualizar el estado visual de los asientos
+    function actualizarAsientos(asientosOcupados) {
+        console.log('Asientos ocupados:', asientosOcupados); // Debug
+        document.querySelectorAll('.seat').forEach(seat => {
+            const asiento = seat.dataset.asiento;
+            if (asientosOcupados.includes(asiento)) {
+                seat.classList.add('occupied');
+                seat.classList.remove('selected');
+                seat.style.backgroundColor = '#ff4444'; // Color rojo para asientos ocupados
+                seat.style.cursor = 'not-allowed';
+                seat.querySelector('.seat-icon').innerHTML = '<i class="fas fa-times"></i>';
+                const index = asientosSeleccionados.indexOf(asiento);
+                if (index > -1) asientosSeleccionados.splice(index, 1);
+            } else {
+                seat.classList.remove('occupied');
+                seat.style.backgroundColor = ''; // Restaurar color por defecto
+                seat.style.cursor = 'pointer';
+                seat.querySelector('.seat-icon').innerHTML = '<i class="fas fa-chair"></i>';
+            }
+        });
+        actualizarContadores();
+    }
+
+    // Función para actualizar contadores y estados
+    function actualizarContadores() {
+        asientosSeleccionadosInput.value = asientosSeleccionados.join(',');
+        cantidadInput.value = asientosSeleccionados.length;
+        asientosCountSpan.innerHTML = '';
+        btnConfirmar.style.display = asientosSeleccionados.length > 0 ? 'block' : 'none';
+        actualizarResumenCompra();
+    }
+
+    function actualizarResumenCompra() {
+        if (asientosSeleccionados.length > 0) {
+            asientosLista.textContent = asientosSeleccionados.join(', ');
+            const total = asientosSeleccionados.length * PRECIO_POR_ASIENTO;
+            precioTotal.textContent = total.toFixed(2) + ' €';
+            
+            const horarioCard = document.querySelector('.horario-card.selected');
+            if (horarioCard) {
+                const fecha = horarioCard.querySelector('.fecha').textContent.trim();
+                const hora = horarioCard.querySelector('.hora').textContent.trim();
+                resumenFecha.textContent = fecha.replace('📅', '').trim();
+                resumenHora.textContent = hora.replace('🕐', '').trim();
+            }
+
+            resumenCompra.style.display = 'block';
+            pasarelaPago.style.display = 'block';
+        } else {
+            resumenCompra.style.display = 'none';
+            pasarelaPago.style.display = 'none';
+        }
+    }
+
+    // Función para seleccionar un horario
+    async function seleccionarHorario(horarioCard) {
+        try {
+            horarioCards.forEach(c => c.classList.remove('selected'));
+            horarioCard.classList.add('selected');
+            
+            const horarioId = horarioCard.dataset.horarioId;
+            horarioIdInput.value = horarioId;
+            
+            const fecha = horarioCard.querySelector('.fecha').textContent.trim();
+            const hora = horarioCard.querySelector('.hora').textContent.trim();
+            const sala = horarioCard.querySelector('.sala').textContent.trim();
+            horarioSeleccionadoSpan.textContent = `${fecha} ${hora} ${sala}`;
+            
+            asientosContainer.style.display = 'block';
+            
+            console.log('Cargando asientos ocupados para horario:', horarioId); // Debug
+            const asientosOcupados = await cargarAsientosOcupados(horarioId);
+            console.log('Asientos ocupados cargados:', asientosOcupados); // Debug
+            
+            // Limpiar selecciones previas
+            asientosSeleccionados = [];
+            document.querySelectorAll('.seat').forEach(seat => {
+                seat.classList.remove('selected');
+                seat.classList.remove('occupied');
+                seat.style.backgroundColor = '';
+                seat.style.cursor = 'pointer';
+                seat.querySelector('.seat-icon').innerHTML = '<i class="fas fa-chair"></i>';
+            });
+            
+            // Actualizar estado de asientos
+            actualizarAsientos(asientosOcupados);
+            actualizarContadores();
+            
+        } catch (error) {
+            console.error('Error al seleccionar horario:', error);
+            alert('Error al cargar los asientos. Por favor, intenta de nuevo.');
+        }
+    }
+
+    // Event listeners para las tarjetas de horarios
+    horarioCards.forEach(card => {
+        card.addEventListener('click', () => seleccionarHorario(card));
     });
 
-    // Ocultar mensaje de error cuando se seleccione un asiento
-    asientos.forEach(asiento => {
-        asiento.addEventListener('change', function() {
-            if (this.checked) {
-                errorAsientos.style.display = 'none';
+    // Event listener para la selección de asientos
+    document.querySelectorAll('.seat').forEach(seat => {
+        seat.addEventListener('click', function() {
+            if (this.classList.contains('occupied')) return;
+
+            const asiento = this.dataset.asiento;
+            const index = asientosSeleccionados.indexOf(asiento);
+
+            if (index > -1) {
+                asientosSeleccionados.splice(index, 1);
+                this.classList.remove('selected');
+                this.querySelector('.seat-icon').innerHTML = '<i class="fas fa-chair"></i>';
+            } else {
+                if (asientosSeleccionados.length < 10) {
+                    asientosSeleccionados.push(asiento);
+                    this.classList.add('selected');
+                    this.querySelector('.seat-icon').innerHTML = '<i class="fas fa-chair"></i>';
+                } else {
+                    alert('No puedes seleccionar más de 10 asientos por reserva.');
+                }
             }
+
+            actualizarContadores();
         });
     });
 
-    // Inicializar el resumen
-    actualizarResumen();
+    // Validación del formulario
+    form.addEventListener('submit', function(e) {
+        if (!horarioIdInput.value) {
+            e.preventDefault();
+            alert('Por favor, selecciona un horario.');
+            return;
+        }
+        if (asientosSeleccionados.length === 0) {
+            e.preventDefault();
+            alert('Por favor, selecciona al menos un asiento.');
+            return;
+        }
+    });
+
+    // Si solo hay un horario disponible (viniendo desde crear-desde-horario), seleccionarlo automáticamente
+    if (horarioCards.length === 1) {
+        await seleccionarHorario(horarioCards[0]);
+    }
 });
 </script>
+@endpush
+
 @endsection

@@ -11,9 +11,10 @@ class Reserva extends Model
     protected $table = 'reservas';
     
     protected $fillable = [
-        'horario_id',
         'user_id',
+        'horario_id',
         'asientos',
+        'cantidad_asientos',
         'estado',
         'codigo_entrada',
         'precio_total'
@@ -47,5 +48,22 @@ class Reserva extends Model
     public function horario()
     {
         return $this->belongsTo(Horario::class);
+    }
+
+    public function pelicula()
+    {
+        return $this->hasOneThrough(
+            Pelicula::class,
+            Horario::class,
+            'id', // Clave foránea en horarios
+            'id', // Clave primaria en peliculas
+            'horario_id', // Clave foránea en reservas
+            'pelicula_id' // Clave foránea en horarios
+        );
+    }
+
+    public function getAsientosArrayAttribute()
+    {
+        return explode(',', $this->asientos);
     }
 }

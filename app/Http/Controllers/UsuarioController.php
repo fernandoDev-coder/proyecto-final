@@ -91,7 +91,8 @@ class UsuarioController extends Controller
 
     public function perfil()
     {
-        return view('usuarios.perfil');
+        $user = Auth::user();
+        return view('usuarios.perfil', compact('user'));
     }
 
     public function actualizarPerfil(Request $request)
@@ -110,13 +111,17 @@ class UsuarioController extends Controller
 
         if ($request->new_password) {
             if (!Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'La contraseña actual no es correcta']);
+                return back()
+                    ->withErrors(['current_password' => 'La contraseña actual no es correcta'])
+                    ->withInput();
             }
             $user->password = Hash::make($request->new_password);
         }
 
         $user->save();
 
-        return redirect()->route('usuario.perfil')->with('success', 'Perfil actualizado correctamente');
+        return redirect()
+            ->route('usuario.perfil')
+            ->with('success', 'Perfil actualizado correctamente');
     }
 }

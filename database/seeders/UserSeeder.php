@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
         // Usuario Administrador
         User::create([
             'name' => 'Administrador',
-            'email' => 'admin@cinepolis.com',
+            'email' => 'admin@takeyourseat.com',
             'password' => Hash::make('Admin2024*'),
             'is_admin' => true,
         ]);
@@ -21,7 +21,7 @@ class UserSeeder extends Seeder
         // Usuario Cliente
         User::create([
             'name' => 'Cliente',
-            'email' => 'cliente@cinepolis.com',
+            'email' => 'cliente@takeyourseat.com',
             'password' => Hash::make('Cliente2024*'),
             'is_admin' => false,
         ]);

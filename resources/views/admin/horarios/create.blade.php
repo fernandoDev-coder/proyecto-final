@@ -71,8 +71,8 @@
                             <label for="sala" class="form-label">Sala</label>
                             <select class="form-select bg-dark text-white" id="sala" name="sala" required>
                                 <option value="">Selecciona una sala</option>
-                                @foreach(['Sala 1', 'Sala 2', 'Sala 3'] as $sala)
-                                    <option value="{{ $sala }}">{{ $sala }}</option>
+                                @foreach([1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as $sala)
+                                    <option value="{{ $sala }}">Sala {{ $sala }}</option>
                                 @endforeach
                             </select>
                         </div>

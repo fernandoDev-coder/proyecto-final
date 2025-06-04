@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pelicula;
+use App\Models\Genero;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,7 @@ class PeliculaController extends Controller
         $query = Pelicula::query();
         
         // Búsqueda por título o descripción
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('titulo', 'LIKE', "%{$searchTerm}%")
@@ -34,13 +35,15 @@ class PeliculaController extends Controller
             });
         }
 
-        // Filtro por género
-        if ($request->has('genero') && $request->genero !== 'todos') {
-            $query->where('genero', 'LIKE', "%{$request->genero}%");
+        // Filtro por género (uno solo)
+        if ($request->filled('genero')) {
+            $query->whereHas('generos', function($q) use ($request) {
+                $q->where('generos.id', $request->genero);
+            });
         }
 
         // Filtro por clasificación
-        if ($request->has('clasificacion') && $request->clasificacion !== 'todas') {
+        if ($request->filled('clasificacion') && $request->clasificacion !== 'todas') {
             $query->where('clasificacion', $request->clasificacion);
         }
         
@@ -48,13 +51,12 @@ class PeliculaController extends Controller
         $query->orderBy('titulo', 'asc');
         
         // Obtener géneros únicos para el filtro
-        $generos = Pelicula::select('genero')->distinct()->pluck('genero');
-        $clasificaciones = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
+        $generos = \App\Models\Genero::orderBy('nombre')->get();
         
         // Paginar los resultados (12 películas por página)
-        $peliculas = $query->paginate(12)->withQueryString();
+        $peliculas = $query->with('generos')->paginate(12)->withQueryString();
         
-        return view('peliculas.index', compact('peliculas', 'generos', 'clasificaciones'));
+        return view('peliculas.index', compact('peliculas', 'generos'));
     }
 
     /**
@@ -105,6 +107,12 @@ class PeliculaController extends Controller
             }
 
             $pelicula = Pelicula::create($validated);
+
+            // Asociar el género a la película
+            $genero = Genero::where('nombre', $validated['genero'])->first();
+            if ($genero) {
+                $pelicula->generos()->attach($genero->id);
+            }
 
             if (!$pelicula) {
                 throw new \Exception('No se pudo crear el registro de la película en la base de datos.');

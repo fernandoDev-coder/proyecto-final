@@ -15,9 +15,10 @@
                 </div>
 
                 <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
 
@@ -26,17 +27,77 @@
                             <i class="fas fa-user-circle"></i>
                         </div>
                         
-                        <div class="user-details">
-                            <h3>{{ Auth::user()->name }}</h3>
-                            <p class="email">{{ Auth::user()->email }}</p>
+                        <form action="{{ route('usuario.actualizar') }}" method="POST" class="user-form">
+                            @csrf
+                            @method('PUT')
                             
-                            @if(Auth::user()->is_admin)
-                                <div class="admin-badge">
-                                    <i class="fas fa-shield-alt"></i>
-                                    Administrador del Sistema
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nombre</label>
+                                <input type="text" 
+                                       class="form-control @error('name') is-invalid @enderror" 
+                                       id="name" 
+                                       name="name" 
+                                       value="{{ old('name', Auth::user()->name) }}" 
+                                       required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Correo Electrónico</label>
+                                <input type="email" 
+                                       class="form-control @error('email') is-invalid @enderror" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ old('email', Auth::user()->email) }}" 
+                                       required>
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="password-section mt-4">
+                                <h4>Cambiar Contraseña</h4>
+                                <p class="text-light mb-3">Deja estos campos en blanco si no deseas cambiar tu contraseña</p>
+
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Contraseña Actual</label>
+                                    <input type="password" 
+                                           class="form-control @error('current_password') is-invalid @enderror" 
+                                           id="current_password" 
+                                           name="current_password">
+                                    @error('current_password')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                            @endif
-                        </div>
+
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">Nueva Contraseña</label>
+                                    <input type="password" 
+                                           class="form-control @error('new_password') is-invalid @enderror" 
+                                           id="new_password" 
+                                           name="new_password">
+                                    @error('new_password')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="new_password_confirmation" class="form-label">Confirmar Nueva Contraseña</label>
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="new_password_confirmation" 
+                                           name="new_password_confirmation">
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
 
                         @if(!Auth::user()->is_admin)
                             <div class="stats-container mt-4">
@@ -49,7 +110,7 @@
 
                             <div class="actions mt-4">
                                 <a href="{{ route('reservas.index') }}" class="btn btn-primary">
-                                    <i class="fas fa-list"></i> Mis Reservas
+                                    <i class="fas fa-list"></i> Ver Mis Reservas
                                 </a>
                             </div>
                         @else
@@ -98,40 +159,47 @@
 }
 
 .user-info {
-    text-align: center;
     color: white;
     padding: 2rem;
 }
 
 .profile-icon {
+    text-align: center;
     font-size: 5rem;
     color: var(--primary-color);
     margin-bottom: 1.5rem;
 }
 
-.user-details h3 {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
+.user-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form-control {
+    background-color: var(--background-lighter);
+    border: 1px solid var(--border-color);
     color: white;
 }
 
-.email {
-    color: var(--text-light);
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+.form-control:focus {
+    background-color: var(--background-lighter);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
 }
 
-.admin-badge {
-    display: inline-block;
-    background-color: rgba(255, 215, 0, 0.1);
-    color: #ffd700;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    margin: 1rem 0;
+.form-control::placeholder {
+    color: var(--text-gray);
 }
 
-.admin-badge i {
-    margin-right: 0.5rem;
+.password-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.password-section h4 {
+    color: white;
+    margin-bottom: 0.5rem;
 }
 
 .stats-container {
@@ -163,7 +231,7 @@
 
 .stat-label {
     display: block;
-    color: var(--text-light);
+    color: var(--text-gray);
     font-size: 0.9rem;
 }
 
@@ -179,5 +247,28 @@
     align-items: center;
     gap: 0.5rem;
 }
+
+.alert {
+    border-radius: 8px;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+    color: #28a745;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
 @endsection 

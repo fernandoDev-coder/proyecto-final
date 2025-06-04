@@ -22,41 +22,67 @@
     @endif
 
     <div class="search-section mb-4">
-        <form action="{{ route('peliculas.index') }}" method="GET" class="search-form">
-            <div class="row g-3">
+        <form action="{{ route('peliculas.index') }}" method="GET" class="mb-4">
+            <div class="row g-3 align-items-center">
                 <div class="col-md-6">
                     <div class="input-group">
                         <input type="text" 
-                            name="search" 
-                            class="form-control search-input" 
-                            placeholder="Buscar películas por título..." 
-                            value="{{ request('search') }}">
-                        <button type="submit" class="btn btn-primary">
+                               name="search" 
+                               class="form-control bg-dark text-white" 
+                               placeholder="Buscar películas por título..." 
+                               value="{{ request('search') }}">
+                        <button class="btn btn-primary" type="submit">
                             <i class="fas fa-search"></i> Buscar
                         </button>
                     </div>
                 </div>
+
                 <div class="col-md-3">
-                    <select name="genero" class="form-select bg-dark text-white" onchange="this.form.submit()">
-                        <option value="todos" {{ request('genero') == 'todos' ? 'selected' : '' }}>Todos los géneros</option>
-                        @foreach($generos as $genero)
-                            <option value="{{ $genero }}" {{ request('genero') == $genero ? 'selected' : '' }}>
-                                {{ $genero }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="clasificacion" class="form-select bg-dark text-white" onchange="this.form.submit()">
-                        <option value="todas" {{ request('clasificacion') == 'todas' ? 'selected' : '' }}>Todas las clasificaciones</option>
-                        @foreach($clasificaciones as $clasificacion)
+                    <select name="clasificacion" class="form-select bg-dark text-white" id="clasificacionSelect">
+                        <option value="todas">Todas las clasificaciones</option>
+                        @foreach(['G', 'PG', 'PG-13', 'R', 'NC-17'] as $clasificacion)
                             <option value="{{ $clasificacion }}" {{ request('clasificacion') == $clasificacion ? 'selected' : '' }}>
                                 {{ $clasificacion }}
                             </option>
                         @endforeach
                     </select>
                 </div>
+
+                <div class="col-md-3">
+                    <select name="genero" class="form-select bg-dark text-white" id="generoSelect">
+                        <option value="">Todos los géneros</option>
+                        @foreach($generos as $genero)
+                            <option value="{{ $genero->id }}" {{ request('genero') == $genero->id ? 'selected' : '' }}>
+                                {{ $genero->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
+
+            @if(!empty(request('generos')))
+                <div class="selected-genres mt-2">
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach($generos->whereIn('id', (array)request('generos')) as $genero)
+                            <span class="badge bg-primary">
+                                {{ $genero->nombre }}
+                                <a href="javascript:void(0)" 
+                                   onclick="removeGenre('{{ $genero->id }}')" 
+                                   class="text-white text-decoration-none ms-1">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </span>
+                        @endforeach
+                        <a href="{{ route('peliculas.index', array_merge(
+                            request()->except('generos'),
+                            ['page' => 1]
+                        )) }}" 
+                           class="badge bg-danger text-decoration-none">
+                            Limpiar filtros <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+            @endif
         </form>
     </div>
 
@@ -79,7 +105,7 @@
                     <a href="{{ route('peliculas.show', $pelicula->id) }}" class="movie-poster-link">
                         <div class="movie-poster">
                             @if($pelicula->imagen)
-                                <img src="{{ url($pelicula->imagen) }}" 
+                                <img src="{{ asset($pelicula->imagen) }}" 
                                     alt="{{ $pelicula->titulo }}" 
                                     class="movie-poster-img">
                             @else
@@ -97,11 +123,22 @@
                     <div class="movie-info">
                         <h3 class="movie-title">{{ $pelicula->titulo }}</h3>
                         <div class="movie-meta">
-                            <span class="duration">
-                                <i class="fas fa-clock"></i> {{ $pelicula->duracion }} min
+                            <span class="duration" title="Duración">
+                                <i class="fas fa-clock"></i> 
+                                @php
+                                    $horas = floor($pelicula->duracion / 60);
+                                    $minutos = $pelicula->duracion % 60;
+                                    $duracionFormateada = $horas > 0 ? $horas . 'h ' : '';
+                                    $duracionFormateada .= $minutos . 'min';
+                                @endphp
+                                {{ $duracionFormateada }}
                             </span>
-                            <span class="genre">
-                                <i class="fas fa-tag"></i> {{ $pelicula->genero }}
+                            <span class="genres" title="Géneros">
+                                <i class="fas fa-tag"></i>
+                                {{ $pelicula->generos->pluck('nombre')->join(', ') }}
+                            </span>
+                            <span class="classification-badge" title="Clasificación">
+                                <i class="fas fa-star"></i> {{ $pelicula->clasificacion }}
                             </span>
                         </div>
                         <p class="movie-description">
@@ -121,9 +158,10 @@
                                         </button>
                                     </form>
                                 @else
-                                    <a href="{{ route('peliculas.show', $pelicula->id) }}" 
-                                        class="btn btn-primary btn-sm">
-                                        <i class="fas fa-ticket-alt"></i> Reservar
+                                    <a href="{{ route('reservas.create', $pelicula->id) }}" 
+                                       class="btn btn-primary d-inline-flex align-items-center justify-content-center">
+                                        <i class="fas fa-ticket-alt"></i>
+                                        <span>Reservar</span>
                                     </a>
                                 @endif
                             @endauth
@@ -139,6 +177,18 @@
 .movies-container {
     max-width: 1200px;
     margin: 0 auto;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .section-header {
@@ -151,12 +201,19 @@
     padding: 1rem;
     background-color: var(--background-light);
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .search-input, .form-select {
     background-color: var(--background-lighter);
     border: 1px solid var(--border-color);
     color: var(--text-light);
+    transition: all 0.3s ease;
+}
+
+.search-input:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
 }
 
 .search-input::placeholder {
@@ -168,13 +225,6 @@
     color: var(--text-light);
 }
 
-.form-select:focus {
-    background-color: var(--background-lighter);
-    border-color: var(--primary-color);
-    color: var(--text-light);
-    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
-}
-
 .movies-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -184,13 +234,15 @@
 
 .movie-card {
     background-color: var(--background-light);
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .movie-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
 }
 
 .movie-poster-link {
@@ -203,8 +255,6 @@
     position: relative;
     padding-top: 150%;
     overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.3s ease;
 }
 
 .movie-poster-img {
@@ -214,6 +264,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.movie-card:hover .movie-poster-img {
+    transform: scale(1.05);
 }
 
 .movie-overlay {
@@ -235,27 +290,81 @@
 }
 
 .movie-info {
-    padding: 1rem;
+    padding: 1.5rem;
 }
 
 .movie-title {
     font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
     color: var(--text-light);
+    font-weight: 600;
 }
 
 .movie-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
+    margin-bottom: 1rem;
     font-size: 0.875rem;
     color: var(--text-gray);
-    margin-bottom: 0.5rem;
+}
+
+.movie-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.classification-badge {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    position: relative;
+    cursor: help;
+}
+
+.classification-badge .tooltip-text {
+    visibility: hidden;
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.classification-badge .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+.classification-badge:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
 }
 
 .movie-description {
     font-size: 0.875rem;
     color: var(--text-gray);
     margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
 .movie-actions {
@@ -264,14 +373,46 @@
     justify-content: flex-end;
 }
 
-.btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    transition: all 0.3s ease;
 }
 
-.btn-danger:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-gray);
+}
+
+.empty-state i {
+    margin-bottom: 1rem;
+    color: var(--text-gray);
+}
+
+@media (max-width: 768px) {
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .movie-info {
+        padding: 1rem;
+    }
+
+    .movie-title {
+        font-size: 1.1rem;
+    }
+
+    .movie-meta {
+        font-size: 0.8rem;
+    }
 }
 
 .alert {
@@ -340,6 +481,81 @@
     color: #6c757d !important;
     cursor: not-allowed;
 }
+
+.form-select[multiple] {
+    height: auto;
+    min-height: 38px;
+    padding: 0;
+}
+
+.form-select[multiple] option {
+    padding: 8px 12px;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-select[multiple] option:last-child {
+    border-bottom: none;
+}
+
+.form-select[multiple] option:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.form-select[multiple] option:checked {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.selected-genres {
+    margin-top: 1rem;
+}
+
+.selected-genres .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--primary-color);
+}
+
+.selected-genres .badge a {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.selected-genres .badge a:hover {
+    opacity: 1;
+}
+
+#generosSelect {
+    height: auto;
+    min-height: 38px;
+}
+
+#generosSelect option {
+    padding: 0.5rem;
+}
+
+.form-select {
+    background-color: var(--background-lighter);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+}
+
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(229, 9, 20, 0.25);
+}
+
+.form-select option {
+    padding: 8px 12px;
+    background-color: var(--background-lighter);
+    color: var(--text-light);
+}
 </style>
 
 <script>
@@ -353,5 +569,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 5000);
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar automáticamente al cambiar la clasificación
+    document.getElementById('clasificacionSelect').addEventListener('change', function() {
+        this.form.submit();
+    });
+
+    // Actualizar automáticamente al cambiar el género
+    document.getElementById('generoSelect').addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+
+function removeGenre(generoId) {
+    const select = document.getElementById('generosSelect');
+    
+    // Deseleccionar el género específico
+    Array.from(select.options).forEach(option => {
+        if (option.value === generoId) {
+            option.selected = false;
+        }
+    });
+    
+    // Enviar el formulario
+    select.form.submit();
+}
 </script>
 @endsection

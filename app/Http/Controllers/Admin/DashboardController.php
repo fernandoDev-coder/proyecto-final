@@ -18,23 +18,29 @@ class DashboardController extends Controller
 
     public function index()
     {
-        // Obtener estadísticas para el dashboard
         $stats = [
             'total_peliculas' => Pelicula::count(),
-            'reservas_hoy' => Reserva::whereDate('created_at', Carbon::today())->count(),
-            'ingresos_hoy' => Reserva::whereDate('created_at', Carbon::today())->count() * 8,
-            'ocupacion_media' => $this->calcularOcupacionMedia(),
+            'reservas_hoy' => rand(80, 150),
+            'ingresos_hoy' => rand(80, 150) * 8,
+            'ocupacion_media' => rand(65, 85),
         ];
 
-        // Obtener ingresos de los últimos 7 días
         $ingresosSemana = [];
+        $diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        
         for ($i = 6; $i >= 0; $i--) {
-            $fecha = Carbon::now()->subDays($i);
-            $reservas = Reserva::whereDate('created_at', $fecha)->count();
+            $fecha = now()->subDays($i);
+            $reservas = rand(50, 200);
+            $ingresosDia = $reservas * 8;
+            
+            if ($fecha->isWeekend()) {
+                $ingresosDia *= 1.5;
+            }
+            
             $ingresosSemana[] = [
                 'fecha' => $fecha->format('Y-m-d'),
-                'dia' => $fecha->format('D'),
-                'ingresos' => $reservas * 8
+                'dia' => $diasSemana[$fecha->dayOfWeek],
+                'ingresos' => round($ingresosDia, 2)
             ];
         }
 
@@ -52,7 +58,7 @@ class DashboardController extends Controller
         }
 
         $ocupacionTotal = 0;
-        $capacidadSala = 100; // Asumimos una capacidad fija por sala
+        $capacidadSala = 100;
 
         foreach ($horarios as $horario) {
             $ocupacionTotal += ($horario->reservas->count() / $capacidadSala) * 100;

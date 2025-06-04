@@ -26,8 +26,10 @@
                             <td>{{ $horario->sala }}</td>
                             <td>
                                 @if(!empty($horario->id) && $horario->id != 0)
-                                    <a href="{{ route('reservas.crearDesdeHorario', $horario->id) }}"
-                                        class="btn-table btn-info">Seleccionar</a>
+                                    @if(!Auth::user()->is_admin)
+                                        <a href="{{ route('reservas.crearDesdeHorario', $horario->id) }}"
+                                            class="btn-table btn-info">Seleccionar</a>
+                                    @endif
                                 @else
                                     <span class="btn-table btn-disabled">No disponible</span>
                                 @endif

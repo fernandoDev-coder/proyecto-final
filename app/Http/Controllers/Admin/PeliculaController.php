@@ -32,7 +32,8 @@ class PeliculaController extends Controller
             'descripcion' => 'required',
             'duracion' => 'required|integer|min:1',
             'clasificacion' => 'required|in:G,PG,PG-13,R,NC-17',
-            'genero' => 'required|in:Acción,Aventura,Comedia,Drama,Ciencia ficción,Terror,Romance,Documental,Animación',
+            'generos' => 'required|array|min:1',
+            'generos.*' => 'required|string|exists:generos,nombre',
             'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
 
@@ -43,7 +44,17 @@ class PeliculaController extends Controller
             $validated['imagen'] = '/storage/peliculas/' . $nombreImagen;
         }
 
-        Pelicula::create($validated);
+        $pelicula = Pelicula::create([
+            'titulo' => $validated['titulo'],
+            'descripcion' => $validated['descripcion'],
+            'duracion' => $validated['duracion'],
+            'clasificacion' => $validated['clasificacion'],
+            'imagen' => $validated['imagen']
+        ]);
+
+        // Asociar los géneros
+        $generos = \App\Models\Genero::whereIn('nombre', $validated['generos'])->get();
+        $pelicula->generos()->attach($generos->pluck('id'));
 
         return redirect()
             ->route('admin.peliculas.index')
@@ -62,7 +73,8 @@ class PeliculaController extends Controller
             'descripcion' => 'required',
             'duracion' => 'required|integer|min:1',
             'clasificacion' => 'required|in:G,PG,PG-13,R,NC-17',
-            'genero' => 'required|in:Acción,Aventura,Comedia,Drama,Ciencia ficción,Terror,Romance,Documental,Animación',
+            'generos' => 'required|array|min:1',
+            'generos.*' => 'required|string|exists:generos,nombre',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
 
@@ -79,7 +91,17 @@ class PeliculaController extends Controller
             $validated['imagen'] = '/storage/peliculas/' . $nombreImagen;
         }
 
-        $pelicula->update($validated);
+        $pelicula->update([
+            'titulo' => $validated['titulo'],
+            'descripcion' => $validated['descripcion'],
+            'duracion' => $validated['duracion'],
+            'clasificacion' => $validated['clasificacion'],
+            'imagen' => $validated['imagen'] ?? $pelicula->imagen
+        ]);
+
+        // Actualizar los géneros
+        $generos = \App\Models\Genero::whereIn('nombre', $validated['generos'])->get();
+        $pelicula->generos()->sync($generos->pluck('id'));
 
         return redirect()
             ->route('admin.peliculas.index')
@@ -95,6 +117,13 @@ class PeliculaController extends Controller
         }
 
         $pelicula->delete();
+
+        // Redirigir según el origen de la petición
+        if (request()->is('peliculas*')) {
+            return redirect()
+                ->route('peliculas.index')
+                ->with('success', 'Película eliminada correctamente');
+        }
 
         return redirect()
             ->route('admin.peliculas.index')

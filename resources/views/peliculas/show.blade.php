@@ -23,10 +23,27 @@
                     <i class="fas fa-clock"></i> {{ $pelicula->duracion }} minutos
                 </span>
                 <span class="genre">
-                    <i class="fas fa-tag"></i> {{ $pelicula->genero }}
+                    <i class="fas fa-tag"></i> {{ $pelicula->generos->pluck('nombre')->join(', ') }}
                 </span>
                 <span class="rating">
                     <i class="fas fa-star"></i> {{ $pelicula->clasificacion }}
+                    @switch($pelicula->clasificacion)
+                        @case('G')
+                            (Público General)
+                            @break
+                        @case('PG')
+                            (Guía Parental)
+                            @break
+                        @case('PG-13')
+                            (Guía Parental Estricta)
+                            @break
+                        @case('R')
+                            (Restringido)
+                            @break
+                        @case('NC-17')
+                            (Solo Adultos)
+                            @break
+                    @endswitch
                 </span>
             </div>
 
@@ -36,7 +53,7 @@
             </div>
 
             <div class="movie-actions">
-                <a href="{{ route('peliculas.index') }}" 
+                <a href="{{ route('peliculas.index', ['page' => request()->query('page', 1)]) }}" 
                     class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Volver a Cartelera
                 </a>
@@ -65,10 +82,18 @@
                         </div>
                     </div>
                     <div class="showtime-actions">
-                        <a href="{{ route('reservas.createDesdeHorario', $horario->id) }}" 
-                            class="btn btn-primary">
-                            <i class="fas fa-ticket-alt"></i> Seleccionar
-                        </a>
+                        @guest
+                            <a href="{{ route('login') }}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar sesión para reservar
+                            </a>
+                        @else
+                            @if(!Auth::user()->is_admin)
+                                <a href="{{ route('reservas.createDesdeHorario', $horario->id) }}" 
+                                    class="btn btn-primary">
+                                    <i class="fas fa-ticket-alt"></i> Seleccionar
+                                </a>
+                            @endif
+                        @endguest
                     </div>
                 </div>
             @empty
